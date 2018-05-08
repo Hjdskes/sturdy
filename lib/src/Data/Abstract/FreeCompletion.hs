@@ -5,6 +5,7 @@
 module Data.Abstract.FreeCompletion where
 
 import Control.Applicative
+import Control.DeepSeq
 import Control.Monad
 import Data.Abstract.Widening
 import Data.Hashable
@@ -19,6 +20,10 @@ instance Show a => Show (FreeCompletion a) where
 instance Hashable a => Hashable (FreeCompletion a) where
   hashWithSalt s (Lower a) = s `hashWithSalt` a
   hashWithSalt s Top = s `hashWithSalt` (2::Int)
+
+instance NFData a => NFData (FreeCompletion a) where
+  rnf (Lower a) = rnf a
+  rnf Top = ()
 
 instance Applicative FreeCompletion where
   pure = return

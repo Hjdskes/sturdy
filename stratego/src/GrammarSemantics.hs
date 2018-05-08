@@ -33,6 +33,7 @@ import           Control.Arrow.Transformer.Abstract.HandleExcept
 import           Control.Arrow.Transformer.Reader
 import           Control.Arrow.Transformer.State
 import           Control.Category hiding ((.))
+import           Control.DeepSeq
 
 import           Data.Abstract.FreeCompletion (FreeCompletion(Lower,Top))
 import qualified Data.Abstract.FreeCompletion as F
@@ -62,7 +63,7 @@ import qualified Test.QuickCheck as Q
 import           Text.Printf
 
 data Constr = Constr Text | StringLit Text | NumLit Int deriving (Eq, Ord, Show)
-newtype Term = Term (GrammarBuilder Constr) deriving (Complete, Eq, Hashable, PreOrd, Show)
+newtype Term = Term (GrammarBuilder Constr) deriving (Complete, Eq, Hashable, NFData, PreOrd, Show)
 
 type TermEnv = Store TermVar Term
 
@@ -139,6 +140,11 @@ instance Hashable Constr where
   hashWithSalt s (Constr c) = s `hashWithSalt` (0::Int) `hashWithSalt` c
   hashWithSalt s (StringLit s') = s `hashWithSalt` (1::Int) `hashWithSalt` s'
   hashWithSalt s (NumLit n) = s `hashWithSalt` (2::Int) `hashWithSalt` n
+
+instance NFData Constr where
+  rnf (Constr c) = rnf c
+  rnf (StringLit s) = rnf s
+  rnf (NumLit n) = rnf n
 
 instance PreOrd (GrammarBuilder Constr) where
   g1 ⊑ g2 = d1 `subsetOf` d2 where

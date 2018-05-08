@@ -108,6 +108,7 @@ library
 
   build-depends:       base,
                        containers,
+                       deepseq,
                        hashable,
                        mtl,
                        random,
