@@ -267,6 +267,18 @@ signature
     Channel                  : Type -> ChannelType
     ReceivingChannel         : UnaryOp * Type -> ChannelType
     SendingChannel           : UnaryOp * Type -> ChannelType
+    Builtin                  : BinaryOp
+    Builtin                  : UnaryOp
+    Builtin                  : Identifier
+    Builtin                  : TypeLit
+    Builtin                  : StringLit
+    Builtin                  : ID
+    Builtin                  : STRING
+    Builtin                  : FLOAT
+    Builtin                  : INT
+    Builtin                  : TypeName
+    Builtin                  : OperandName
+    Builtin                  : Literal
 
 rules
 

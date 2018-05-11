@@ -1213,6 +1213,18 @@ Specification(
               , ConstType(SortNoArgs("ChannelType"))
               )
             )
+          , OpDecl("Builtin", ConstType(SortNoArgs("BinaryOp")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("UnaryOp")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("Identifier")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("TypeLit")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("StringLit")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("ID")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("STRING")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("FLOAT")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("INT")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("TypeName")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("OperandName")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("Literal")))
           ]
         )
       ]
@@ -19877,6 +19889,12 @@ Specification(
               )
             )
           )
+        )
+      , SDefT(
+          "Builtin_0_0"
+        , []
+        , []
+        , Match(Anno(Op("Builtin", []), Wld()))
         )
       , SDefT(
           "DR__UNDEFINE_1_0"
