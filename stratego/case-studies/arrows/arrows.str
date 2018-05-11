@@ -338,7 +338,34 @@ signature
                      : String -> CONSYM
                      : String -> VARSYM
                      : String -> CONID
-
+    Builtin          : Varid
+    Builtin          : Varsym
+    Builtin          : Qconsym
+    Builtin          : Qvarsym
+    Builtin          : Qconid
+    Builtin          : INTEGER
+    Builtin          : FLOAT
+    Builtin          : RATIONAL
+    Builtin          : PRIMINTEGER
+    Builtin          : PRIMCHAR
+    Builtin          : PRIMSTRING
+    Builtin          : PRIMFLOAT
+    Builtin          : PRIMDOUBLE
+    Builtin          : CLITLIT
+    Builtin          : Qop
+    Builtin          : QopNoNeg
+    Builtin          : Fargs
+    Builtin          : Declbinds
+    Builtin          : AnyExp
+    Builtin          : NoOffsideStmtBlock
+    Builtin          : OffsideStmtList
+    Builtin          : NoOffsideAltBlock
+    Builtin          : OffsideAltList
+    Builtin          : Qtycls
+    Builtin          : Tyvar
+    Builtin          : ArrNoOffsideAltBlock
+    Builtin          : ArrOffsideAlt
+    Builtin          : ArrImplStmt
 
 rules
 
