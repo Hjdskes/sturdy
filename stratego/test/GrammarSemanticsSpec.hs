@@ -360,7 +360,7 @@ spec = do
                 , Ctor (Constr "Zero") [] ])
       , ("Type", [ Ctor (Constr "Fun") ["Type", "Type"]
                  , Ctor (Constr "Num") [] ])
-      , ("String", [ Ctor (Constr "String") [] ])
+      , ("String", [ Ctor (Constr "Builtin") [] ])
       ]
 
     swap' = Strategy [] [] (Scope ["x","y"] (

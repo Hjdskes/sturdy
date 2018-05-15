@@ -2,23 +2,24 @@ module pcf
 
 signature
   constructors
-    Var  : String -> Exp
-    App  : Exp * Exp -> Exp
-    Abs  : String * Type * Exp -> Exp
-    Zero : Exp
-    Succ : Exp -> Exp
-    Pred : Exp -> Exp
-    Ifz  : Exp * Exp * Exp -> Exp
+    Var     : String -> Exp
+    App     : Exp * Exp -> Exp
+    Abs     : String * Type * Exp -> Exp
+    Zero    : Exp
+    Succ    : Exp -> Exp
+    Pred    : Exp -> Exp
+    Ifz     : Exp * Exp * Exp -> Exp
 
-    Num  : Type
-    Fun  : Type * Type -> Type
+    Num     : Type
+    Fun     : Type * Type -> Type
 
-    Nil  : List(a)
-    Cons : a * List(a) -> List(a)
-         : ()
-         : a -> (a)
-         : a * b -> (a, b)
-         : a * b * c -> (a, b, c)
+    Nil     : List(a)
+    Cons    : a * List(a) -> List(a)
+            : ()
+            : a -> (a)
+            : a * b -> (a, b)
+            : a * b * c -> (a, b, c)
+    Builtin : String
 
 strategies
 

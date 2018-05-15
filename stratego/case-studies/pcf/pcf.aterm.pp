@@ -72,6 +72,7 @@ Specification(
                 )
               )
             )
+          , OpDecl("Builtin", ConstType(SortNoArgs("String")))
           ]
         )
       ]
@@ -1473,6 +1474,12 @@ Specification(
               )
             )
           )
+        )
+      , SDefT(
+          "Builtin_0_0"
+        , []
+        , []
+        , Match(Anno(Op("Builtin", []), Wld()))
         )
       , SDefT(
           "DR__UNDEFINE_1_0"
