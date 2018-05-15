@@ -53,11 +53,13 @@ library
 Executable case-studies
   ghc-options:         -Wall
   Build-Depends:       base,
+                       containers,
                        criterion,
                        pretty,
                        sturdy-lib,
                        sturdy-stratego,
                        text,
+                       tree-automata,
                        unordered-containers
   hs-source-dirs:      case-studies
   main-is:             Main.hs

@@ -4,14 +4,12 @@
 -- programs.
 module Main where
 
-import           Syntax hiding (Fail)
+import qualified ConcreteSemantics as C
+import qualified GrammarSemantics as G
+import qualified SortSemantics as S
 import qualified WildcardSemantics as W
-import qualified Data.Abstract.Powerset as W
-
-import qualified Pretty.Haskell as H
-import qualified Pretty.JavaScript as J
-import qualified Pretty.PCF as P
-import           Pretty.Results
+import           Signature
+import           Syntax hiding (Fail)
 
 import           Paths_sturdy_stratego
 
@@ -19,56 +17,99 @@ import qualified Criterion.Measurement as CM
 import qualified Criterion.Types as CT
 
 import           Data.ATerm
+import qualified Data.Abstract.FreeCompletion as A
 import           Data.Abstract.HandleError
-import qualified Data.Abstract.PreciseStore as S
+import qualified Data.Abstract.PreciseStore as A
 import           Data.Abstract.Terminating
+import qualified Data.Concrete.Error as C
+import           Data.Constructor
 import           Data.Foldable
-import           Data.HashSet (HashSet)
+import qualified Data.HashMap.Lazy as C
 import qualified Data.HashSet as H
+import qualified Data.Map as M
 import           Data.String
 import qualified Data.Text.IO as TIO
 
-import           Text.PrettyPrint
 import           Text.Printf
 
--- | Runs the case studies.
+import qualified TreeAutomata as G
+
+import Debug.Trace
+
 main :: IO ()
 main = do
     CM.initializeTime
-    prettyPrint H.ppHaskell =<< caseStudy (W.eval 5) "arrows" "desugar_arrow_0_0"
-    prettyPrint H.ppHaskell =<< caseStudy (W.eval 5) "cca" "norm_0_0"
-    prettyPrint P.ppPCF     =<< caseStudy (W.eval 5) "arith" "eval_0_0"
-    prettyPrint P.ppPCF     =<< caseStudy (W.eval 5) "pcf" "eval_0_0"
-    prettyPrint P.ppPCF     =<< caseStudy (W.eval 5) "pcf" "check_eval_0_0"
-    prettyPrint J.tryPPJS   =<< caseStudy (W.eval 5) "go2js" "generate_js_ast_0_0"
+    -- Infinite loop for sort semantics?
+    print =<< caseStudy 1 1 1 [Sort "Exp"] "pcf" "eval_0_0"
+    -- Nonterminating sort semantics
+    -- print =<< caseStudy 1 1 1 [Sort "Exp", Sort "Type"] "pcf" "check_eval_0_0"
+    -- Working just fine for sort semantics:
+    -- print =<< caseStudy 1 1 1 [Sort "Exp"] "arith" "eval_0_0"
+    -- 
+    print =<< caseStudy 1 1 1 [Sort "Module"] "arrows" "desugar_arrow_0_0"
+    -- Cannot run: uses Prim.
+    -- print =<< caseStudy 10 11 1 [Sort "SourceFile", Sort "TestSources"] "go2js" "generate_js_ast_0_0"
+    -- print =<< caseStudy 1 1 1 [Sort "Module"] "cca" "norm_0_0"
 
--- | Pretty prints a given set of abstract terms using the given
--- pretty printer.
-prettyPrint :: (W.Term -> Doc) -> HashSet W.Term -> IO ()
-prettyPrint pprint res =
-  if H.size res <= 200
-     then print $ ppResults pprint (toList res)
-     else printf "Output ommited because the result set contains %d elements\n" (H.size res)
+runGrammar :: Int -> G.GrammarBuilder G.Constr -> Strat -> StratEnv -> A.Store TermVar G.Term -> G.GrammarBuilder G.Constr
+runGrammar fuel grammar function senv store = do
+  case G.eval fuel function senv store (G.Term grammar) of
+    Terminating res' -> G.fromTerm (filterResults res')
+    NonTerminating -> fail "Nonterminating grammar semantics"
 
-measure :: String -> IO () -> IO ()
-measure analysisName action = do
-  (m,_) <- CM.measure (CT.nfIO action) 1
-  printf "- %s: %s\n" analysisName (CM.secs (CT.measCpuTime m))
+runWildcard :: Int -> G.Alphabet G.Constr -> Strat -> StratEnv -> A.Store TermVar W.Term -> G.GrammarBuilder G.Constr
+runWildcard fuel alphabet function senv store = do
+  case W.eval fuel function senv store W.Wildcard of
+    Terminating res' ->
+      let terms = H.fromList $ toList $ filterResults' (toList res')
+      in H.foldr (union alphabet) emptyGrammar terms
+    NonTerminating -> fail "Nonterminating wildcard semantics"
+  where
+    union :: G.Alphabet G.Constr -> W.Term -> G.GrammarBuilder G.Constr -> G.GrammarBuilder G.Constr
+    union alph t g = g `G.union` go t
+      where
+        go (W.Cons (Constructor c) ts) = G.addConstructor (G.Constr c) (map go ts)
+        go (W.StringLiteral s) = G.fromTerm (G.stringGrammar s)
+        go (W.NumberLiteral n) = G.fromTerm (G.numberGrammar n)
+        go (W.Wildcard) = G.wildcard alph
+    emptyGrammar = G.grammar "empty" (M.fromList [("empty", [])])
 
--- | Runs the given semantics on the given function within the given
--- case study.
-caseStudy :: (Strat -> StratEnv -> W.TermEnv -> W.Term -> Terminating (W.Pow (Error () (W.TermEnv,W.Term)))) -> String -> String -> IO (HashSet W.Term)
-caseStudy eval name function = do
-  printf "------------------ case study: %s ----------------------\n" name
+runSort :: Int -> S.SortContext -> Strat -> StratEnv -> A.Store TermVar S.Term -> S.Term
+runSort fuel ctx function senv store = do
+  let res = S.eval fuel function senv ctx store (S.Term { S.sort = S.Top, S.context = ctx })
+  case res of
+    Terminating res' -> filterResults res'
+    NonTerminating -> error "Nonterminating sort semantics"
+
+caseStudy :: Int -> Int -> Int -> [Sort] -> String -> String -> IO String
+caseStudy fuelG fuelW fuelS starts name function = do
+  printf "------------------ case study: %s %s ----------------------\n" name function
   file <- TIO.readFile =<< getDataFileName (printf "case-studies/%s/%s.aterm" name name)
   case parseModule =<< parseATerm file of
     Left e -> fail (show e)
     Right module_ -> do
-      let res = fromTerminating (error "non-terminating wildcard semantics") $ eval (Call (fromString function) [] []) (stratEnv module_) S.empty W.Wildcard
-      let terms = H.fromList $ toList $ filterResults (toList res)
+      let strat = (Call (fromString function) [] [])
+          senv = stratEnv module_
+          -- grammar = G.createGrammar starts (signature module_)
+          -- g1 = trace ("Grammar: " ++ show grammar) $ runGrammar fuelG grammar strat senv A.empty
+          -- g2 = runWildcard fuelW (G.alphabet grammar) strat senv A.empty
+          g3 = runSort fuelS (S.createContext' (signature module_)) strat senv A.empty
 
-      _ <- CM.measure (CT.nfIO (return terms)) 1
-      return terms
- where
-   filterResults = fmap (\r -> case r of Success (_,t) -> t; SuccessOrFail _ (_,t) -> t; Fail _ -> error "")
-                 . filter (\r -> case r of Success _ -> True; SuccessOrFail _ _ -> True; Fail _ -> False)
+      -- _ <- CM.measure (CT.nfIO (return g1)) 1
+      return (printf "Sort: %s" (show g3))
+      -- if g1 == g2
+      --   then return "Equally precise"
+      --   else if g1 `G.subsetOf` g2
+      --        then return "More precise"
+      --        else return "Less precise"
+
+filterResults :: (Show a, Show b) => A.FreeCompletion (Error () (a, b)) -> b
+filterResults r = case r of
+  A.Lower (Success (_,b)) -> b
+  A.Lower (SuccessOrFail _ (_,b)) -> b
+  A.Lower (Fail _) -> error "Fail"
+  top -> error (show top)
+
+filterResults' :: [(Error () (W.TermEnv, W.Term))] -> [W.Term]
+filterResults' = fmap (\r -> case r of Success (_,t) -> t; SuccessOrFail _ (_,t) -> t; Fail _ -> error "")
+  . filter (\r -> case r of Success _ -> True; SuccessOrFail _ _ -> True; Fail _ -> False)
