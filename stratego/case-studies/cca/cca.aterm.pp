@@ -1565,6 +1565,34 @@ Specification(
           , OpDeclInj(
               FunType([ConstType(SortNoArgs("String"))], ConstType(SortNoArgs("CONID")))
             )
+          , OpDecl("Builtin", ConstType(SortNoArgs("Varid")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("Varsym")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("Qconsym")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("Qvarsym")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("Qconid")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("INTEGER")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("FLOAT")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("RATIONAL")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("PRIMINTEGER")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("PRIMCHAR")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("PRIMSTRING")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("PRIMFLOAT")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("PRIMDOUBLE")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("CLITLIT")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("Qop")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("QopNoNeg")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("Fargs")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("Declbinds")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("AnyExp")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("NoOffsideStmtBlock")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("OffsideStmtList")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("NoOffsideAltBlock")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("OffsideAltList")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("Qtycls")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("Tyvar")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("ArrNoOffsideAltBlock")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("ArrOffsideAlt")))
+          , OpDecl("Builtin", ConstType(SortNoArgs("ArrImplStmt")))
           ]
         )
       ]
@@ -10067,6 +10095,12 @@ Specification(
               )
             )
           )
+        )
+      , SDefT(
+          "Builtin_0_0"
+        , []
+        , []
+        , Match(Anno(Op("Builtin", []), Wld()))
         )
       , SDefT(
           "DR__UNDEFINE_1_0"
