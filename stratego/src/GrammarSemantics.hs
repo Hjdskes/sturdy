@@ -114,11 +114,11 @@ toRhs (Constructor constr, Fun sorts _) = Ctor (Constr constr) (map sortToNonter
 toProd :: (Sort, [(Constructor,Fun)]) -> (Nonterm, [Rhs Constr])
 toProd (sort, rhss) = (sortToNonterm sort, map toRhs rhss)
 
-createGrammar :: Signature -> GrammarBuilder Constr
-createGrammar (Signature (_, sorts) _) = grammar startSymbol prods
+createGrammar :: [Sort] -> Signature -> GrammarBuilder Constr
+createGrammar starts (Signature (_, sorts) _) = grammar startSymbol prods
   where
     startSymbol = "Start"
-    startProd = (startSymbol, map (Eps . sortToNonterm) (LM.keys sorts))
+    startProd = (startSymbol, map (Eps . sortToNonterm) starts)
     -- TODO: what to do with these builtins?
     builtins = [("String", [ Ctor (Constr "String") []]) ]
     prods = M.fromList $ startProd : map toProd (LM.toList sorts) ++ builtins

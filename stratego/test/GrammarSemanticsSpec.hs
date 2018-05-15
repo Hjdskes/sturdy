@@ -5,6 +5,7 @@ module GrammarSemanticsSpec(main, spec) where
 import qualified ConcreteSemantics as C
 import           GrammarSemantics
 import           SharedSemantics
+import           Sort
 import           Soundness
 import           Syntax hiding (Fail)
 
@@ -42,9 +43,10 @@ spec = do
   describe "Construction" $ do
     it "should correctly construct an RTG from a Stratego signature" $ do
       file <- TIO.readFile =<< getDataFileName "case-studies/pcf/pcf.aterm"
+      let starts = [Sort (SortId "Exp"), Sort (SortId "Type")]
       case parseModule =<< parseATerm file of
         Left e -> fail (show e)
-        Right m -> createGrammar (signature m) `shouldBe` pcf
+        Right m -> createGrammar starts (signature m) `shouldBe` pcf
 
   describe "Utilities" $ do
     it "convertToList should work" $
