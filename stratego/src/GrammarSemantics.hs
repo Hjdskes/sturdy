@@ -56,6 +56,7 @@ import           Data.Monoidal
 import           Data.Order
 import           Data.Term hiding (wildcard)
 import           Data.Text (Text)
+import qualified Data.Text as T
 
 import           TreeAutomata
 
@@ -106,22 +107,43 @@ eval i s = runInterp (eval' s) i
 sortToNonterm :: Sort -> Nonterm
 sortToNonterm sort = case sort of
   Sort (SortId nt) -> nt
-  _ -> error "Parametric polymorphism is not yet supported"
+  List s -> T.append "List_" (sortToNonterm s)
+  Option s -> T.append "Option_" (sortToNonterm s)
+  s -> error ("Sort " ++ show s ++ " is not yet supported")
+
+isList :: Sort -> Bool
+isList (List _) = True
+isList _ = False
+
+isOption :: Sort -> Bool
+isOption (Option _) = True
+isOption _ = False
 
 toRhs :: (Constructor,Fun) -> Rhs Constr
 toRhs (Constructor constr, Fun sorts _) = Ctor (Constr constr) (map sortToNonterm sorts)
 
-toProd :: (Sort, [(Constructor,Fun)]) -> (Nonterm, [Rhs Constr])
-toProd (sort, rhss) = (sortToNonterm sort, map toRhs rhss)
+toList :: Sort -> (Nonterm, [Rhs Constr])
+toList l@(List s) = (listNt, [Ctor (Constr "Cons") [sortToNonterm s, listNt], Ctor (Constr "Nil") [] ]) where
+  listNt = sortToNonterm l
+toList _ = error "Not a list"
+
+toOption :: Sort -> (Nonterm, [Rhs Constr])
+toOption l@(Option s) = (optionNt, [Ctor (Constr "Some") [sortToNonterm s], Ctor (Constr "None") [sortToNonterm s]]) where
+  optionNt = sortToNonterm l
+toOption _ = error "Not an option"
+
+toProds :: (Sort, [(Constructor,Fun)]) -> [(Nonterm, [Rhs Constr])]
+toProds (sort, rhss) = main:(lists++options) where
+  main = (sortToNonterm sort, map toRhs rhss)
+  lists = map toList (concatMap (\(_,Fun s _) -> filter isList s) rhss)
+  options = map toOption (concatMap (\(_,Fun s _) -> filter isOption s) rhss)
 
 createGrammar :: [Sort] -> Signature -> GrammarBuilder Constr
 createGrammar starts (Signature (_, sorts) _) = grammar startSymbol prods
   where
     startSymbol = "Start"
     startProd = (startSymbol, map (Eps . sortToNonterm) starts)
-    -- TODO: what to do with these builtins?
-    builtins = [("String", [ Ctor (Constr "String") []]) ]
-    prods = M.fromList $ startProd : map toProd (LM.toList sorts) ++ builtins
+    prods = M.fromList $ startProd : concatMap toProds (LM.toList sorts)
 
 -- Instances -----------------------------------------------------------------------------------------
 deriving instance Category (Interp s)
