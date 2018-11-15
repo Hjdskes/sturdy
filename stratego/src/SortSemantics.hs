@@ -20,7 +20,7 @@ import           Signature hiding (Top,Sort,List,Tuple,Option,Bottom)
 import qualified Sort as Sort
 import           Soundness
 import           Syntax hiding (Fail,TermPattern(..))
-import           Utils
+import           Utils hiding (permutations)
 
 import           Control.Arrow
 import           Control.Arrow.Const
@@ -166,6 +166,38 @@ to' ((s,senv),(tenv,t)) = (tenv,(senv,(s,t)))
 
 eval :: Int -> Strat -> StratEnv -> SortContext -> TermEnv -> Term -> Terminating (FreeCompletion (Error () (TermEnv,Term)))
 eval i s = runInterp (eval' s) i
+
+createTerm :: Signature -> Term
+createTerm sig = Term { sort = Top, context = createContext' sig }
+
+createContext' :: Signature -> SortContext
+createContext' (Signature (foo, sorts) _) = SortContext
+  { signatures = addBuiltins (map sortToSort (M.keys sorts)) (M.fromListWith (\s1 s2 -> nub (s1 ++ s2)) $ map (\(c,Fun ss s) -> (c,[(map sortToSort ss,sortToSort s)])) (M.toList foo))
+  , lexicals = Set.empty -- TODO
+  -- TODO: insert Top?
+  , injectionClosure = M.fromListWith Set.union $ map (\(s,cFuncs) -> (sortToSort s, Set.fromList (map (\(_,Fun _ s') -> sortToSort s') cFuncs))) (M.toList sorts)
+  }
+
+addBuiltins :: [Sort] -> HashMap Constructor [([Sort],Sort)] -> HashMap Constructor [([Sort],Sort)]
+addBuiltins sorts sig = M.unionWith (\s1 s2 -> nub (s1 ++ s2)) builtins sig where
+  builtins = M.fromList [("", map (\ss -> (ss,"Tuple")) (permutate 2 sorts))
+                        ,("Nil", map (\s -> ([],List s)) sorts)
+                        ,("Cons", map (\s -> ([s,List s],List s)) sorts)]
+
+permutate :: Int -> [a] -> [[a]]
+permutate n list = concatMap permutations $ choose' list [] where
+  choose' []     r = if length r == n then [r] else []
+  choose' (x:xs) r | length r == n = [r]
+                   | otherwise     = choose' xs (x:r) ++ choose' xs r
+
+sortToSort :: Sort.Sort -> Sort
+sortToSort Sort.Bottom = Bottom
+sortToSort Sort.Top = Top
+sortToSort (Sort.List s) = List (sortToSort s)
+sortToSort (Sort.Option s) = Option (sortToSort s)
+sortToSort (Sort.Tuple ss) = Tuple (map sortToSort ss)
+sortToSort (Sort.Sort s) = Sort s
+sortToSort (Coproduct _ _) = error "No such sort"
 
 -- Instances -----------------------------------------------------------------------------------------
 deriving instance Category (Interp s)

@@ -10,6 +10,7 @@ import           SortSemantics hiding (sortContext)
 
 import           Control.Arrow
 
+import           Data.ATerm hiding (List)
 import           Data.Abstract.FreeCompletion (fromCompletion)
 import           Data.Abstract.HandleError
 import qualified Data.Abstract.PreciseStore as S
@@ -17,12 +18,15 @@ import qualified Data.Abstract.StackWidening as SW
 import           Data.Abstract.Terminating (fromTerminating)
 import qualified Data.Concrete.Powerset as C
 import           Data.Constructor
+import           Data.GaloisConnection
 import           Data.HashMap.Lazy (HashMap)
 import qualified Data.HashMap.Lazy as M
-import           Data.GaloisConnection
 import qualified Data.Set as Set
 import qualified Data.Term as C
-    
+import qualified Data.Text.IO as TIO
+
+import           Paths_sturdy_stratego
+
 import           Text.Printf
 
 import           Test.Hspec hiding (context)
@@ -34,6 +38,28 @@ main = hspec spec
 
 spec :: Spec
 spec = do
+
+  describe "Construction" $ do
+    it "should correctly construct a term from a Stratego signature" $ do
+      let ctx = SortContext { signatures = M.fromList [("Var",[(["String"],"Exp")])
+                                                      ,("Abs",[(["String","Type","Exp"],"Exp")])
+                                                      ,("Pred",[(["Exp"],"Exp")])
+                                                      ,("Num",[([],"Type")])
+                                                      ,("App",[(["Exp","Exp"],"Exp")])
+                                                      ,("Builtin",[([],"String")])
+                                                      ,("Zero",[([],"Exp")])
+                                                      ,("Fun",[(["Type","Type"],"Type")])
+                                                      ,("Ifz",[(["Exp","Exp","Exp"],"Exp")])
+                                                      ,("Succ",[(["Exp"],"Exp")])]
+                            , lexicals = Set.empty
+                            , injectionClosure = M.fromList [("Type",Set.singleton "Type")
+                                                            ,("Exp",Set.singleton "Exp")
+                                                            ,("String",Set.singleton "String")]
+                            }
+      file <- TIO.readFile =<< getDataFileName "case-studies/pcf/pcf.aterm"
+      case parseModule =<< parseATerm file of
+        Left e -> fail (show e)
+        Right m -> createTerm (signature m) `shouldBe` Term { sort = Top, context = ctx }
 
   describe "Utilities" $ do
     it "convertToList should work with identical sorts" $
