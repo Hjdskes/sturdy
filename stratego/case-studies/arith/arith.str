@@ -4,15 +4,10 @@ signature
   constructors
     Zero : Exp
     Succ : Exp -> Exp
-    Mul : Exp * Exp -> Exp
+    Mul  : Exp * Exp -> Exp
     Add  : Exp * Exp -> Exp
 
     Nil  : List(a)
-    Cons : a * List(a) -> List(a)
-         : ()
-         : a -> (a)
-         : a * b -> (a, b)
-         : a * b * c -> (a, b, c)
 
 rules
   eval: Zero() -> Zero()
@@ -25,7 +20,6 @@ rules
   eval: Add(Zero(), n) -> <eval> n
   eval: Add(Succ(m),n) -> <eval> Succ(Add(m, n))
   eval: Add(e1,e2)     -> <eval> Add(e1, e2)
-
 
 /* rules */
 /*   step: Succ(n) -> Succ(<step> n) */

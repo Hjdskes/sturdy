@@ -14,7 +14,7 @@ import           Syntax hiding (Fail)
 import           Paths_sturdy_stratego
 
 import qualified Criterion.Measurement as CM
-import qualified Criterion.Types as CT
+-- import qualified Criterion.Types as CT
 
 import           Data.ATerm
 import qualified Data.Abstract.FreeCompletion as A
@@ -34,13 +34,13 @@ import           Text.Printf
 
 import qualified TreeAutomata as G
 
-import Debug.Trace
+-- import Debug.Trace
 
 main :: IO ()
 main = do
     CM.initializeTime
     -- Infinite loop for sort semantics?
-    print =<< caseStudy 1 1 1 [Sort "Exp"] "pcf" "eval_0_0"
+    -- print =<< caseStudy 1 1 1 [Sort "Exp"] "pcf" "eval_0_0"
     -- Nonterminating sort semantics
     -- print =<< caseStudy 1 1 1 [Sort "Exp", Sort "Type"] "pcf" "check_eval_0_0"
     -- Working just fine for sort semantics:
@@ -50,6 +50,13 @@ main = do
     -- Cannot run: uses Prim.
     -- print =<< caseStudy 10 11 1 [Sort "SourceFile", Sort "TestSources"] "go2js" "generate_js_ast_0_0"
     -- print =<< caseStudy 1 1 1 [Sort "Module"] "cca" "norm_0_0"
+
+runConcrete :: Strat -> StratEnv -> C.TermEnv -> C.Term
+runConcrete function senv store = do
+  let term = C.Cons "" [C.Cons "Nil" [], C.Cons "Succ" [C.Cons "Zero" []]]
+  case C.eval function senv store term of
+    C.Success (_,term') -> term'
+    C.Fail _ -> error "Failing concrete semantics"
 
 runGrammar :: Int -> G.GrammarBuilder G.Constr -> Strat -> StratEnv -> A.Store TermVar G.Term -> G.GrammarBuilder G.Constr
 runGrammar fuel grammar function senv store = do
@@ -61,7 +68,7 @@ runWildcard :: Int -> G.Alphabet G.Constr -> Strat -> StratEnv -> A.Store TermVa
 runWildcard fuel alphabet function senv store = do
   case W.eval fuel function senv store W.Wildcard of
     Terminating res' ->
-      let terms = H.fromList $ toList $ filterResults' (toList res')
+      let terms = H.fromList $ filterResults' (toList res')
       in H.foldr (union alphabet) emptyGrammar terms
     NonTerminating -> fail "Nonterminating wildcard semantics"
   where
@@ -90,13 +97,14 @@ caseStudy fuelG fuelW fuelS starts name function = do
     Right module_ -> do
       let strat = (Call (fromString function) [] [])
           senv = stratEnv module_
+          -- c = runConcrete strat senv (C.TermEnv C.empty)
           -- grammar = G.createGrammar starts (signature module_)
-          -- g1 = trace ("Grammar: " ++ show grammar) $ runGrammar fuelG grammar strat senv A.empty
+          -- g1 = runGrammar fuelG grammar strat senv A.empty
           -- g2 = runWildcard fuelW (G.alphabet grammar) strat senv A.empty
           g3 = runSort fuelS (S.createContext' (signature module_)) strat senv A.empty
 
       -- _ <- CM.measure (CT.nfIO (return g1)) 1
-      return (printf "Sort: %s" (show g3))
+      return (printf "Concrete: %s\nGrammar: %s\nWildcard: %s\nSort: %s" (show "concrete") (show "grammar") (show "wildcard") (show g3))
       -- if g1 == g2
       --   then return "Equally precise"
       --   else if g1 `G.subsetOf` g2

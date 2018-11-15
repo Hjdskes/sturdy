@@ -15,10 +15,7 @@ signature
 
     Nil     : List(a)
     Cons    : a * List(a) -> List(a)
-            : ()
-            : a -> (a)
             : a * b -> (a, b)
-            : a * b * c -> (a, b, c)
     Builtin : String
 
 strategies
@@ -41,8 +38,8 @@ strategies
   eval: (env, Var(x)) -> <lookup> (x,env)
   eval: (env, Abs(x,t,e)) -> Abs(x,t,e)
   eval: (env, App(e1,e2)) -> <eval> ([(x,arg)|env],e)
-    where <eval> (env,e1) => Abs(x,_,e);
-          <eval> (env,e2) => arg
+    where <eval>(env,e1) => Abs(x,_,e);
+          <eval>(env,e2) => arg
   eval: (_, Zero()) -> Zero()
   eval: (env, Succ(e)) -> Succ(<eval>(env,e))
   eval: (env, Pred(e)) -> Pred(<eval>(env,e))
@@ -51,8 +48,8 @@ strategies
   eval: (env, Ifz(e1,e2,e3)) -> <eval>(env,e3)
     where <eval> (env,e2) => Succ(_)
 
-  check-eval: e -> <eval> ([], e)
-    where <check> ([],e) => _
+  check-eval: e -> <eval>  ([], e)
+    where <check>  ([],e) => _
 
-  lookup = (?(x,[(x,y)|_]); !y)
-         <+ (?(x,[_|r]); <lookup> (x,r))
+  lookup = (? (x,[(x,y)|_]); !y)
+         <+ (? (x,[_|r]); <lookup>  (x,r))

@@ -14,7 +14,7 @@ prepare() {
 }
 
 prepare arrows
-prepare cca
-prepare pcf
-prepare arith
-prepare go2js
+#prepare cca
+#prepare pcf
+#prepare arith
+#prepare go2js
